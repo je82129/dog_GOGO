@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>柴犬大冒險 3.0</title>
+    <style>
+        body { 
+            margin: 0; padding: 0; background-color: #1e272e; 
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; flex-direction: column; color: white;
+            font-family: "微軟正黑體", sans-serif;
+        }
+        canvas { 
+            border: 4px solid #f1c40f; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.8); 
+        }
+        .instructions { 
+            margin-top: 15px; font-size: 1.1rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px; border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas" width="800" height="450"></canvas>
+    
+    <div class="instructions">
+        🕹️ 【←】【→】移動，【空白鍵】跳躍<br>
+        ⚠️ 小心掉進坑洞！精準踩在黑狗頭上可獲得金幣 🪙
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- 遊戲狀態 ---
+        let gameState = 'PLAYING'; 
+        let currentLevel = 1;
+        let score = 0;
+        let startTime = Date.now();
+        let totalElapsedTime = 0;
+        let cameraX = 0;
+
+        // --- 物理與環境 ---
+        const gravity = 0.8;
+        const groundY = 400; // 地板的 Y 座標
+
+        // 主角設定
+        let shiba = {
+            x: 100, y: 0, size: 45, dx: 0, dy: 0, speed: 6, jumpPower: -14, 
+            grounded: false, direction: 1
+        };
+
+        // 關卡物件
+        let platforms = [];
+        let groundSegments = []; // 地板區塊 (製造坑洞用)
+        let monsters = [];
+        let particles = [];      // 金幣特效
+        let clouds = [];         // 背景雲朵
+        let flagpole = { x: 0, y: 0, w: 40, h: 100 };
+        const keys = { right: false, left: false, space: false };
+
+        // --- 按鍵監聽 ---
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowRight') keys.right = true;
+            if (e.code === 'ArrowLeft') keys.left = true;
+            if (e.code === 'Space') {
+                e.preventDefault(); 
+                if (gameState === 'PLAYING' && shiba.grounded) {
+                    shiba.dy = shiba.jumpPower;
+                    shiba.grounded = false;
+                } else if (gameState !== 'PLAYING') {
+                    if (gameState === 'GAMEOVER') restartGame();
+                    else if (gameState === 'LEVEL_CLEARED') nextLevel();
+                    else if (gameState === 'ALL_CLEARED') {
+                        currentLevel = 1; score = 0; totalElapsedTime = 0; nextLevel();
+                    }
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowRight') keys.right = false;
+            if (e.code === 'ArrowLeft') keys.left = false;
+        });
+
+        // --- 產生背景與雲朵 ---
+        function generateClouds(levelLength) {
+            clouds = [];
+            for (let i = 0; i < levelLength; i += 300) {
+                clouds.push({
+                    x: i + Math.random() * 200,
+                    y: 40 + Math.random() * 100,
+                    size: 20 + Math.random() * 15,
+                    speed: 0.2 + Math.random() * 0.3 // 視差移動速度
+                });
+            }
+        }
+
+        // --- 關卡產生器 ---
+        function loadLevel(level) {
+            shiba.x = 100; shiba.y = 200; shiba.dy = 0; shiba.direction = 1;
+            platforms = []; groundSegments = []; monsters = []; particles = [];
+            cameraX = 0; gameState = 'PLAYING'; startTime = Date.now();
+
+            let levelLength = level === 1 ? 4000 : (level === 2 ? 6000 : 8000);
+            let monsterCount = level === 1 ? 3 : (level === 2 ? 6 : 12);
+            generateClouds(levelLength);
+
+            // 產生有坑洞的地板
+            let currentX = 0;
+            while (currentX < levelLength + 500) {
+                let segmentWidth = 400 + Math.random() * 600; // 地板長度
+                let gapWidth = 100 + Math.random() * 80;      // 坑洞寬度 (確保狗跳得過去)
+                
+                // 起點強制有地板
+                if (currentX === 0) segmentWidth = 800; 
+
+                groundSegments.push({ x: currentX, w: segmentWidth });
+                currentX += segmentWidth + gapWidth;
+            }
+
+            // 產生懸浮平台 (高度限制在狗能跳上去的範圍：約低於地板 80~120px)
+            for (let i = 500; i < levelLength - 500; i += Math.random() * 400 + 300) {
+                platforms.push({ 
+                    x: i, y: groundY - (80 + Math.random() * 40), 
+                    w: 120 + Math.random() * 80, h: 20 
+                });
+            }
+
+            // 產生怪物 (確保生在地板上)
+            for (let i = 0; i < monsterCount; i++) {
+                let mx = 600 + Math.random() * (levelLength - 1000);
+                monsters.push({
+                    x: mx, y: groundY - 40, size: 45, dx: (Math.random() > 0.5 ? 1.5 : -1.5), isDead: false
+                });
+            }
+
+            flagpole.x = levelLength; flagpole.y = groundY - flagpole.h;
+        }
+
+        // --- 精準碰撞判定 (向內縮小 Hitbox) ---
+        function getHitbox(entity, type) {
+            if (type === 'dog') {
+                // 柴犬判定盒縮小，避免擦邊死
+                return { x: entity.x + 10, y: entity.y + 10, w: entity.size - 20, h: entity.size - 10 };
+            } else if (type === 'monster') {
+                // 怪物判定盒縮小
+                return { x: entity.x + 8, y: entity.y + 15, w: entity.size - 16, h: entity.size - 15 };
+            }
+            return { x: entity.x, y: entity.y, w: entity.w, h: entity.h };
+        }
+
+        function isCollide(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.w && rect1.x + rect1.w > rect2.x &&
+                   rect1.y < rect2.y + rect2.h && rect1.y + rect1.h > rect2.y;
+        }
+
+        // --- 遊戲邏輯更新 ---
+        function update() {
+            if (gameState !== 'PLAYING') return;
+
+            if (keys.right) { shiba.dx = shiba.speed; shiba.direction = 1; }
+            else if (keys.left) { shiba.dx = -shiba.speed; shiba.direction = -1; }
+            else { shiba.dx = 0; }
+
+            shiba.dy += gravity;
+            shiba.x += shiba.dx;
+            shiba.y += shiba.dy;
+
+            if (shiba.x < 0) shiba.x = 0;
+
+            shiba.grounded = false;
+
+            // 檢查是否在地板區段上方
+            let dogCenter = shiba.x + shiba.size / 2;
+            let onGroundSegment = groundSegments.some(seg => dogCenter >= seg.x && dogCenter <= seg.x + seg.w);
+
+            // 地板碰撞與坑洞判定
+            if (shiba.y + shiba.size >= groundY) {
+                if (onGroundSegment) {
+                    shiba.y = groundY - shiba.size;
+                    shiba.dy = 0;
+                    shiba.grounded = true;
+                } else if (shiba.y > canvas.height + 50) {
+                    // 掉出畫面外，判定死亡
+                    gameState = 'GAMEOVER'; 
+                }
+            }
+
+            // 懸浮平台碰撞
+            platforms.forEach(p => {
+                if (shiba.dy >= 0 && shiba.y + shiba.size - shiba.dy <= p.y + 10 && 
+                    dogCenter > p.x && dogCenter < p.x + p.w) {
+                    shiba.y = p.y - shiba.size;
+                    shiba.dy = 0;
+                    shiba.grounded = true;
+                }
+            });
+
+            // 怪物碰撞與移動
+            let dogBox = getHitbox(shiba, 'dog');
+            monsters.forEach(m => {
+                if (m.isDead) return;
+
+                m.x += m.dx;
+                // 簡易怪物防掉落/邊界反彈
+                let mCenter = m.x + m.size / 2;
+                let mOnGround = groundSegments.some(seg => mCenter >= seg.x && mCenter <= seg.x + seg.w);
+                if (!mOnGround || Math.random() < 0.01) m.dx *= -1; 
+
+                let mBox = getHitbox(m, 'monster');
+                
+                if (isCollide(dogBox, mBox)) {
+                    // 踩踏判定：柴犬往下掉，且之前的底部高於怪物的頂部
+                    let prevDogBottom = (shiba.y - shiba.dy) + shiba.size;
+                    if (shiba.dy > 0 && prevDogBottom <= m.y + 20) {
+                        m.isDead = true;   
+                        shiba.dy = -12; // 踩到後大力彈跳
+                        score += 100;
+                        // 產生金幣特效
+                        particles.push({ x: m.x, y: m.y, life: 40, text: '+100 🪙' });
+                    } else {
+                        gameState = 'GAMEOVER';
+                    }
+                }
+            });
+
+            // 更新金幣特效
+            particles.forEach(p => { p.y -= 1.5; p.life--; });
+            particles = particles.filter(p => p.life > 0);
+
+            // 旗竿碰撞
+            let flagRect = { x: flagpole.x, y: flagpole.y, w: flagpole.w, h: flagpole.h };
+            if (isCollide(dogBox, flagRect)) {
+                gameState = currentLevel >= 3 ? 'ALL_CLEARED' : 'LEVEL_CLEARED';
+            }
+
+            // 鏡頭跟隨 (視角平滑)
+            cameraX = shiba.x - canvas.width / 3;
+            if (cameraX < 0) cameraX = 0;
+        }
+
+        // --- 畫面繪製 ---
+        function draw() {
+            // 繪製動態天空漸層
+            let skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            skyGradient.addColorStop(0, "#4facfe");
+            skyGradient.addColorStop(1, "#00f2fe");
+            ctx.fillStyle = skyGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 繪製背景元素 (視差滾動)
+            ctx.save();
+            
+            // 太陽
+            ctx.fillStyle = "#FFD700";
+            ctx.beginPath();
+            ctx.arc(650 - cameraX * 0.05, 80, 40, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 雲朵
+            ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+            clouds.forEach(c => {
+                let cloudX = c.x - cameraX * c.speed;
+                ctx.beginPath();
+                ctx.arc(cloudX, c.y, c.size, 0, Math.PI*2);
+                ctx.arc(cloudX + c.size, c.y - c.size*0.5, c.size*1.2, 0, Math.PI*2);
+                ctx.arc(cloudX + c.size*2, c.y, c.size, 0, Math.PI*2);
+                ctx.fill();
+            });
+            ctx.restore();
+
+            // 準備繪製關卡實體
+            ctx.save();
+            ctx.translate(-cameraX, 0);
+
+            // 畫地板 (斷層)
+            ctx.fillStyle = '#8B4513';
+            let grassGradient = ctx.createLinearGradient(0, groundY, 0, groundY + 15);
+            grassGradient.addColorStop(0, "#32CD32");
+            grassGradient.addColorStop(1, "#228B22");
+
+            groundSegments.forEach(seg => {
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(seg.x, groundY, seg.w, canvas.height - groundY);
+                ctx.fillStyle = grassGradient;
+                ctx.fillRect(seg.x, groundY, seg.w, 15);
+            });
+
+            // 畫懸浮平台
+            platforms.forEach(p => {
+                ctx.fillStyle = '#f39c12';
+                ctx.fillRect(p.x, p.y, p.w, p.h);
+                ctx.fillStyle = '#d35400';
+                ctx.fillRect(p.x, p.y + 10, p.w, p.h - 10);
+            });
+
+            // 畫終點旗竿
+            ctx.fillStyle = '#ecf0f1';
+            ctx.fillRect(flagpole.x, flagpole.y, 6, flagpole.h);
+            ctx.font = '45px Arial'; ctx.textAlign = "left";
+            ctx.fillText('🚩', flagpole.x - 5, flagpole.y + 35);
+
+            // 畫怪物 (使用中心點對齊來轉向)
+            ctx.font = '40px Arial';
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = 'center';
+            monsters.forEach(m => {
+                if (!m.isDead) {
+                    ctx.save();
+                    ctx.translate(m.x + m.size / 2, m.y + m.size / 2);
+                    if (m.dx < 0) ctx.scale(-1, 1); // 怪物向左走時翻轉
+                    ctx.fillText('🐕‍🦺', 0, 0);
+                    ctx.restore();
+                }
+            });
+
+            // 畫金幣特效
+            ctx.font = 'bold 24px 微軟正黑體';
+            ctx.fillStyle = '#f1c40f';
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life / 40;
+                ctx.fillText(p.text, p.x + 20, p.y);
+            });
+            ctx.globalAlpha = 1.0;
+
+            // 畫主角柴犬 (精準原地轉向)
+            ctx.save();
+            ctx.translate(shiba.x + shiba.size / 2, shiba.y + shiba.size / 2); // 移到柴犬中心
+            ctx.scale(shiba.direction, 1); // 根據方向翻轉
+            ctx.font = '40px Arial';
+            ctx.fillText('🐕', 0, 0);
+            ctx.restore();
+
+            ctx.restore(); // 取消鏡頭偏移，畫 UI
+
+            // UI 介面
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(15, 15, 280, 45);
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px 微軟正黑體';
+            ctx.textAlign = 'left';
+            
+            let displayTime = totalElapsedTime;
+            if (gameState === 'PLAYING') displayTime += Math.floor((Date.now() - startTime) / 1000);
+            ctx.fillText(`🚩 Level: ${currentLevel} | 🪙 ${score} | ⏱️ ${displayTime}s`, 25, 45);
+
+            // 狀態畫面
+            if (gameState === 'GAMEOVER') drawMessage('GG！挑戰失敗 💀', '按下【空白鍵】重新開始');
+            if (gameState === 'LEVEL_CLEARED') drawMessage(`太棒了！通過第 ${currentLevel} 關 🏁`, '按下【空白鍵】進入下一關');
+            if (gameState === 'ALL_CLEARED') drawMessage('🏆 恭喜破關！你是最強柴犬！', '按下【空白鍵】重新挑戰');
+        }
+
+        function drawMessage(title, sub) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#f1c40f';
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 45px 微軟正黑體';
+            ctx.fillText(title, canvas.width / 2, canvas.height / 2 - 10);
+            ctx.fillStyle = 'white';
+            ctx.font = '22px 微軟正黑體';
+            ctx.fillText(sub, canvas.width / 2, canvas.height / 2 + 40);
+        }
+
+        function restartGame() { score = 0; totalElapsedTime = 0; loadLevel(currentLevel); }
+        function nextLevel() {
+            totalElapsedTime += Math.floor((Date.now() - startTime) / 1000);
+            currentLevel++; loadLevel(currentLevel);
+        }
+
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+
+        loadLevel(1); gameLoop();
+    </script>
+</body>
+</html>
