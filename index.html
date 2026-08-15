@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>反駁型人格大刺探 🐾 | 你是溝通達人還是隱形槓精？</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'sans-serif'],
+            display: ['"Zen Maru Gothic"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+            },
+            accent: {
+              purple: '#8b5cf6',
+              teal: '#14b8a6',
+              pink: '#ec4899'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #fef3c7 0%, #ffe4e6 50%, #e0e7ff 100%);
+      min-height: 100vh;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+    }
+
+    .option-btn {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .option-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px -5px rgba(249, 115, 22, 0.25);
+    }
+
+    .animate-bounce-short {
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="flex items-center justify-center p-4 md:p-6 min-h-screen">
+
+  <!-- Main App Container -->
+  <main class="w-full max-w-2xl mx-auto">
+
+    <!-- PAGE 1: COVER / WELCOME -->
+    <section id="page-cover" class="glass-card rounded-3xl p-6 md:p-10 text-center relative overflow-hidden fade-in">
+      <div class="absolute -top-10 -right-10 w-32 h-32 bg-orange-200 rounded-full blur-2xl opacity-60"></div>
+      <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-pink-200 rounded-full blur-2xl opacity-60"></div>
+
+      <div class="inline-block px-4 py-1.5 bg-orange-100 text-brand-700 font-bold rounded-full text-sm mb-4 border border-orange-200 shadow-sm">
+        🐾 社交人際黑洞大解析
+      </div>
+
+      <h1 class="font-display font-black text-3xl md:text-5xl text-gray-800 mb-4 tracking-tight leading-tight">
+        反駁型人格大刺探！<br>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 to-accent-purple">
+          你是溝通達人？還是隱形槓精？
+        </span>
+      </h1>
+
+      <div class="my-6 py-4 px-6 bg-white/70 rounded-2xl border border-orange-100 text-left text-gray-600 text-sm md:text-base leading-relaxed space-y-2">
+        <p>💡 <b>什麼是反駁型人格？</b></p>
+        <p>聽人講話時，腦袋第一時間總是彈出「可是...」、「不是啦...」、「其實不然...」嗎？這往往不是惡意，而是一種習慣性的反射機制！</p>
+        <p>透過本測驗的 <b>12 道情境題</b>，精準測出你的社交刺刺指數！</p>
+      </div>
+
+      <!-- Interactive Micro-game preview -->
+      <div class="my-6 p-4 bg-orange-50/80 border border-orange-200/80 rounded-2xl text-center">
+        <p class="text-xs font-bold text-gray-500 mb-2">【小測試】點選你平時最常說的第一句話：</p>
+        <div class="flex flex-wrap justify-center gap-2" id="micro-interactive">
+          <button onclick="playDemoClick(this, '不是啦！')" class="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:border-brand-500 transition">「不是啦！」</button>
+          <button onclick="playDemoClick(this, '可是...')" class="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:border-brand-500 transition">「可是...」</button>
+          <button onclick="playDemoClick(this, '原理解析')" class="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:border-brand-500 transition">「原來如此」</button>
+          <button onclick="playDemoClick(this, '沒錯')" class="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-sm font-medium hover:border-brand-500 transition">「對呀！」</button>
+        </div>
+        <p id="micro-feedback" class="text-xs text-brand-600 font-bold mt-2 h-4"></p>
+      </div>
+
+      <button onclick="startQuiz()" class="w-full py-4 bg-gradient-to-r from-brand-500 to-brand-600 text-white font-black text-xl rounded-2xl shadow-lg hover:shadow-orange-300 hover:scale-[1.02] active:scale-[0.98] transition duration-200 flex items-center justify-center gap-2">
+        <span>開始測驗 (共 12 題)</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </section>
+
+    <!-- PAGE 2: QUIZ INTERACTIVE -->
+    <section id="page-quiz" class="glass-card rounded-3xl p-6 md:p-8 hidden fade-in">
+      <!-- Progress Bar & Top Info -->
+      <div class="mb-6">
+        <div class="flex justify-between items-center text-sm font-bold text-gray-500 mb-2">
+          <span id="question-number" class="text-brand-600 font-black">第 1 / 12 題</span>
+          <span id="progress-percent">8%</span>
+        </div>
+        <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden p-0.5">
+          <div id="progress-bar" class="h-full bg-gradient-to-r from-brand-400 to-accent-pink rounded-full transition-all duration-300 w-[8%]"></div>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div id="quiz-card" class="min-h-[380px] flex flex-col justify-between">
+        <div>
+          <span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-md mb-3">
+            <i class="fa-solid fa-comments mr-1"></i>情境題
+          </span>
+          <h2 id="question-text" class="text-xl md:text-2xl font-bold text-gray-800 leading-snug mb-6">
+            題目載入中...
+          </h2>
+
+          <!-- Options Grid -->
+          <div id="options-container" class="space-y-3">
+            <!-- Options inserted dynamically -->
+          </div>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
+          <button id="btn-prev" onclick="prevQuestion()" class="px-4 py-2 text-gray-400 font-bold hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition text-sm flex items-center gap-1" disabled>
+            <i class="fa-solid fa-chevron-left"></i> 上一題
+          </button>
+          <span class="text-xs text-gray-400 font-medium">請選擇最符合你直覺的選項</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 3: RESULT PAGE -->
+    <section id="page-result" class="glass-card rounded-3xl p-6 md:p-10 text-center hidden fade-in">
+      <div class="inline-block px-4 py-1 bg-amber-100 text-amber-800 font-bold text-xs rounded-full mb-3">
+        🎉 測驗分析完成！
+      </div>
+
+      <h2 class="font-display font-black text-3xl text-gray-800 mb-1">你的反駁型人格診斷報告</h2>
+      <p class="text-gray-500 text-sm mb-6">Based on Refutation & Communication Score</p>
+
+      <!-- Score Badge Box -->
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-orange-200 rounded-3xl p-6 mb-6 shadow-inner relative">
+        <div class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Refutation Index Score</div>
+        <div class="text-5xl md:text-6xl font-black text-brand-600 mb-2 font-display">
+          <span id="final-score">0</span> <span class="text-2xl text-gray-400 font-normal">/ 36</span>
+        </div>
+
+        <div id="result-type-title" class="text-2xl md:text-3xl font-black text-gray-800 mt-2">
+          計算中...
+        </div>
+        <p id="result-subtitle" class="text-brand-600 font-bold text-sm mt-1"></p>
+      </div>
+
+      <!-- Result Breakdown Card -->
+      <div class="text-left space-y-4 mb-8">
+        <div class="p-4 bg-white/80 rounded-2xl border border-gray-100 shadow-sm">
+          <h3 class="font-bold text-gray-800 flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-magnifying-glass-chart text-brand-500"></i> 人格特質剖析
+          </h3>
+          <p id="result-desc" class="text-gray-600 text-sm leading-relaxed">
+            --
+          </p>
+        </div>
+
+        <div class="p-4 bg-white/80 rounded-2xl border border-gray-100 shadow-sm">
+          <h3 class="font-bold text-gray-800 flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-kit-medical text-accent-teal"></i> 專屬防槓處方箋
+          </h3>
+          <p id="result-advice" class="text-gray-600 text-sm leading-relaxed">
+            --
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-3">
+        <button onclick="restartQuiz()" class="w-full py-3.5 bg-brand-500 text-white font-bold text-lg rounded-xl shadow-md hover:bg-brand-600 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-rotate-right"></i> 重新測驗
+        </button>
+        <button onclick="shareResult()" class="w-full py-3 bg-white border border-gray-200 text-gray-700 font-bold text-sm rounded-xl hover:bg-gray-50 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-share-nodes text-brand-500"></i> 複製診斷結果與好友分享
+        </button>
+      </div>
+
+      <!-- GitHub Repository Link Footer -->
+      <div class="mt-8 pt-6 border-t border-gray-200/60 text-xs text-gray-400">
+        專案已設定 GitHub Repo：<a href="https://github.com/je82129/dog_GOGO" target="_blank" class="text-brand-500 underline font-bold">je82129/dog_GOGO</a>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // 12 題資料庫與計分
+    const questions = [
+      {
+        title: "1. 當朋友推薦你一部熱門影集時，你的第一反應通常是：",
+        options: [
+          { text: "A. 「那部我看過介紹，其實劇情漏洞超多的吧？」", score: 3 },
+          { text: "B. 「好像很多人看，但我個人比較喜歡更有質感的劇。」", score: 2 },
+          { text: "C. 「是喔？你覺得哪裡好看？我有空去看看。」", score: 1 },
+          { text: "D. 「好呀！謝謝推薦，我今晚就開來看！」", score: 0 }
+        ]
+      },
+      {
+        title: "2. 開會時同事提出一個新企劃，你發現其中有一個小漏洞：",
+        options: [
+          { text: "A. 立刻插話：「等一下，這方法根本行不通吧？」", score: 3 },
+          { text: "B. 點頭等對方講完，然後說：「想法不錯，但是執行面有大問題。」", score: 2 },
+          { text: "C. 先肯定創意的亮點，再提問：「關於這部分有考慮替代方案嗎？」", score: 1 },
+          { text: "D. 算了，大家沒意見我就順著聽，之後再看看。", score: 0 }
+        ]
+      },
+      {
+        title: "3. 當別人指出你說話裡的某個小錯誤（例如日期或記錯錢）：",
+        options: [
+          { text: "A. 第一時間反射：「沒有吧！我剛剛意思是……是你聽錯了。」", score: 3 },
+          { text: "B. 「那是因為剛剛時空背景不一樣，換個角度看我沒錯。」", score: 2 },
+          { text: "C. 「啊真的耶！我記錯了，感謝提醒。」", score: 1 },
+          { text: "D. 「對不起對不起，都是我的錯！」", score: 0 }
+        ]
+      },
+      {
+        title: "4. 看到社群網路上有人發表跟你完全相反的觀點時：",
+        options: [
+          { text: "A. 手癢忍不住留言，一定要列點列到對方無法反駁。", score: 3 },
+          { text: "B. 在心裡酸一句，或者跟朋友私訊吐槽他的邏輯漏洞。", score: 2 },
+          { text: "C. 思考一下對方的觀點是否有道理，吸收到新視角後滑掉。", score: 1 },
+          { text: "D. 快速滑過，別人的想法跟我無關。", score: 0 }
+        ]
+      },
+      {
+        title: "5. 朋友正在跟你吐苦水抱怨工作，你聽著聽著會想：",
+        options: [
+          { text: "A. 「其實這件事你自己也有問題，為什麼不這樣做？」", score: 3 },
+          { text: "B. 「雖然他很討厭，但你這樣處理也有點不妥吧？」", score: 2 },
+          { text: "C. 「真的辛苦你了，換作是我也會覺得很心累。」", score: 1 },
+          { text: "D. 「對！太扯了！全都是他的錯，我絕對支持你！」", score: 0 }
+        ]
+      },
+      {
+        title: "6. 你最常用的口頭禪或轉折詞是：",
+        options: [
+          { text: "A. 「不是啊……」、「哪有……」、「可是……」", score: 3 },
+          { text: "B. 「對啦，但是……」、「其實不然……」", score: 2 },
+          { text: "C. 「原來如此」、「理解，那如果……」", score: 1 },
+          { text: "D. 「沒錯」、「你說得對」、「都好呀」", score: 0 }
+        ]
+      },
+      {
+        title: "7. 在討論晚餐要吃什麼時，有人建議「吃火鍋好了」：",
+        options: [
+          { text: "A. 「昨天才吃過類似的，而且夏天吃火鍋很熱耶。」", score: 3 },
+          { text: "B. 「火鍋是可以，但這附近沒有好吃的吧？」", score: 2 },
+          { text: "C. 「可以啊，你有推薦哪一家嗎？」", score: 1 },
+          { text: "D. 「好啊好啊！火鍋超讚！」", score: 0 }
+        ]
+      },
+      {
+        title: "8. 當你聽到有人用「大家都知道……」、「公認的道理……」開頭時：",
+        options: [
+          { text: "A. 內心反骨魂爆發，立刻找罕見的反例來打臉他。", score: 3 },
+          { text: "B. 覺得對方講話太絕對，試圖挑他語病。", score: 2 },
+          { text: "C. 評估一下這是不是真的普遍共識。", score: 1 },
+          { text: "D. 順著對方的話點頭認同。", score: 0 }
+        ]
+      },
+      {
+        title: "9. 遊戲或討論中，如果你發現自己的觀點真的錯了：",
+        options: [
+          { text: "A. 硬拗到底，把話題轉移到別的概念上證明自己沒全錯。", score: 3 },
+          { text: "B. 「好啦就算這點你對，但大方向我還是沒錯啊。」", score: 2 },
+          { text: "C. 大方承認：「哈哈被你發現了，這次是我看走眼。」", score: 1 },
+          { text: "D. 感到非常尷尬，立刻道歉並閉嘴。", score: 0 }
+        ]
+      },
+      {
+        title: "10. 朋友買了一件新衣服問你「好看嗎？」但你覺得很普通：",
+        options: [
+          { text: "A. 直言不諱：「這顏色很顯老，而且剪裁怪怪的。」", score: 3 },
+          { text: "B. 「還行啦，但感覺另一套比較適合你。」", score: 2 },
+          { text: "C. 尋找亮點：「這圖案滿有特色！你自己喜歡最重要。」", score: 1 },
+          { text: "D. 「超好看的！非常適合你！」", score: 0 }
+        ]
+      },
+      {
+        title: "11. 當別人向你請教意見時，你的習慣是：",
+        options: [
+          { text: "A. 先把他原本的想法全部推翻，再給他你的「正確解答」。", score: 3 },
+          { text: "B. 告訴他哪裡做錯了，指出他思考上的盲點。", score: 2 },
+          { text: "C. 先瞭解他的想法，再提出一兩個建議供他參考。", score: 1 },
+          { text: "D. 鼓勵他照自己的直覺去做就好。", score: 0 }
+        ]
+      },
+      {
+        title: "12. 看到有人推廣一個全新的概念或潮流時：",
+        options: [
+          { text: "A. 第一時間找尋批評文章或失敗案例，覺得這又是話術。", score: 3 },
+          { text: "B. 抱持懷疑態度，覺得這不過是換湯不換藥。", score: 2 },
+          { text: "C. 保持好奇，去瞭解這個新概念背後的原因。", score: 1 },
+          { text: "D. 盲目跟風，覺得大家都在討論一定很厲害。", score: 0 }
+        ]
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let userAnswers = new Array(questions.length).fill(null);
+
+    // Audio sound generator using Web Audio API
+    function playBeep(freq = 440, type = 'sine', duration = 0.1) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        // Audio fallback
+      }
+    }
+
+    function playDemoClick(btn, text) {
+      playBeep(520, 'triangle', 0.15);
+      const feedback = document.getElementById('micro-feedback');
+      if (text.includes('不是') || text.includes('可是')) {
+        feedback.innerText = `警報！「${text}」是標準反駁開場白喔！`;
+      } else {
+        feedback.innerText = `太棒了！「${text}」展現了開放包容的溝通態度！`;
+      }
+    }
+
+    function startQuiz() {
+      playBeep(600, 'sine', 0.15);
+      document.getElementById('page-cover').classList.add('hidden');
+      document.getElementById('page-quiz').classList.remove('hidden');
+      currentQuestionIndex = 0;
+      userAnswers.fill(null);
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = questions[currentQuestionIndex];
+      document.getElementById('question-number').innerText = `第 ${currentQuestionIndex + 1} / ${questions.length} 題`;
+
+      const progressPct = Math.round(((currentQuestionIndex + 1) / questions.length) * 100);
+      document.getElementById('progress-percent').innerText = `${progressPct}%`;
+      document.getElementById('progress-bar').style.width = `${progressPct}%`;
+
+      document.getElementById('question-text').innerText = q.title;
+
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+
+      q.options.forEach((opt, idx) => {
+        const isSelected = userAnswers[currentQuestionIndex] === opt.score;
+        const button = document.createElement('button');
+        button.className = `option-btn w-full p-4 text-left border rounded-2xl text-gray-700 text-sm md:text-base font-medium flex items-center justify-between gap-3 ${
+          isSelected 
+            ? 'bg-orange-100 border-brand-500 font-bold text-brand-700' 
+            : 'bg-white/90 border-gray-200/80 hover:border-orange-300'
+        }`;
+        
+        button.onclick = () => selectOption(opt.score);
+        button.innerHTML = `
+          <span>${opt.text}</span>
+          <i class="fa-regular ${isSelected ? 'fa-circle-check text-brand-600 text-lg' : 'fa-circle text-gray-300'}"></i>
+        `;
+        optionsContainer.appendChild(button);
+      });
+
+      // Update Prev button state
+      const btnPrev = document.getElementById('btn-prev');
+      btnPrev.disabled = currentQuestionIndex === 0;
+    }
+
+    function selectOption(score) {
+      playBeep(700, 'sine', 0.08);
+      userAnswers[currentQuestionIndex] = score;
+
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        renderQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        playBeep(400, 'sine', 0.08);
+        currentQuestionIndex--;
+        renderQuestion();
+      }
+    }
+
+    function showResults() {
+      playBeep(800, 'triangle', 0.3);
+      document.getElementById('page-quiz').classList.add('hidden');
+      document.getElementById('page-result').classList.remove('hidden');
+
+      const totalScore = userAnswers.reduce((a, b) => a + (b || 0), 0);
+      document.getElementById('final-score').innerText = totalScore;
+
+      let typeTitle = "";
+      let subtitle = "";
+      let desc = "";
+      let advice = "";
+
+      if (totalScore <= 9) {
+        typeTitle = "溫和順從型 🕊️";
+        subtitle = "【避事和平鴿】反駁指數：15%";
+        desc = "你幾乎從不與人正面衝突，極度善於傾聽與給予正面情緒價值。但有時為了維護和氣，你可能會過度隱藏自己的真實立場，不敢表達不同意見。";
+        advice = "保持溫和是你的優勢，但適時提出「建設性的不同觀點」，能讓你在職場與人際關係中更具主體性與信任度！";
+      } else if (totalScore <= 18) {
+        typeTitle = "理性討論型 💡";
+        subtitle = "【溝通智慧王】反駁指数：45%";
+        desc = "拿捏得非常到位！你分得清「盲目反駁」與「理性討論」的界線。你具備獨立思考能力，同時又能展現高同理心，先尊重對方再分享觀點。";
+        advice = "繼續保持這種高品質的溝通模式！你在團隊中是非常理想的協調者與建設性討論引導者。";
+      } else if (totalScore <= 27) {
+        typeTitle = "微槓青年 🧐";
+        subtitle = "【習慣性「可是」族】反駁指數：70%";
+        desc = "你的本意並非壞心，但口頭禪裡常常不自主地帶著「可是...」、「不是啦...」。即使認同對方，也會習慣先找出一個小缺點轉折一下，容易讓人覺得你有點挑惕。";
+        advice = "試著把口頭禪從「對啦，但是...」替換成「對！而且...」。先給予全盤肯定，再補充你的想法，對個人魅力會有奇蹟般的提升！";
+      } else {
+        typeTitle = "鋼鐵反駁王 🦖";
+        subtitle = "【頂級槓精戰神】反駁指數：95%";
+        desc = "警告！你的「反駁本能」已經超越了討論內容本身！聽別人講話時，你的大腦是不是隨時在自動掃描對方的邏輯漏洞？常常讓人覺得跟你講話壓力很大。";
+        advice = "強大的批判性思維是優點，但請記得：『贏了爭論，輸了感情』。嘗試在回應前停頓三秒，先說一句「原來你是這樣想的」，會有意想不到的緩和效果！";
+      }
+
+      document.getElementById('result-type-title').innerText = typeTitle;
+      document.getElementById('result-subtitle').innerText = subtitle;
+      document.getElementById('result-desc').innerText = desc;
+      document.getElementById('result-advice').innerText = advice;
+    }
+
+    function restartQuiz() {
+      playBeep(500, 'sine', 0.1);
+      document.getElementById('page-result').classList.add('hidden');
+      document.getElementById('page-cover').classList.remove('hidden');
+    }
+
+    function shareResult() {
+      const score = document.getElementById('final-score').innerText;
+      const type = document.getElementById('result-type-title').innerText;
+      const shareText = `我在【反駁型人格大刺探】測驗中獲得了 ${score} 分，診斷結果是：${type}！快來測測你的社交刺刺指數吧！`;
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareText).then(() => {
+          alert('診斷結果已成功複製到剪貼簿，快貼給朋友分享吧！');
+        });
+      } else {
+        alert(shareText);
+      }
+    }
+  </script>
+</body>
+</html>
